@@ -53,7 +53,10 @@ class StruOptim(object):
         group = []
         for i in xrange(self.num_para):
             new_list = list(para_list)
-            new_list[i] += step
+            if len(step) == 1:
+                new_list[i] += step
+            else:
+                new_list[i] += step[i]
             if (numpy.array(new_list) <= numpy.array(self.end)).all():
                 group.append(new_list)
         return group
@@ -66,15 +69,25 @@ class StruOptim(object):
         for point in itertools.product(*a):
             mup,mut,sp,st,s = get_mu(list(point),self.hist_para,self.hist_perform)
             mu.append([mup,mut])
-        mu = zip(*mu)
-        return max(0,*mu[0]), -min(0,*mu[1]),s,sp,st
+        mup = numpy.percentile(numpy.array(mu)[:, 0], 99)
+        mut = numpy.percentile(numpy.array(mu)[:, 1], 1)
+        return max(0,mup), -min(0,mut),s,sp,st
 
     def _mu_trans(self,ori,performance,gird_count = 10000):
         up, ut, s, sp, st = self._gird_mu(gird_count)
-        rp = 1 - numpy.exp(up * (sp.transform(numpy.array(ori[0]).reshape(1,1))
+        up = min(100,up)
+        ut = min(100,ut)
+        if up >0.01:
+            rp = 1 - numpy.exp(up * (sp.transform(numpy.array(ori[0]).reshape(1,1))
                                  - sp.transform(performance[:, 0].reshape(-1,1))))
-        rt = numpy.exp(ut * (st.transform(performance[:, 1].reshape(-1,1))
+        else:
+            rp = performance[:, 0].reshape(-1,1) - ori[0]
+        if ut > 0.01:
+            rt = numpy.exp(ut * (st.transform(performance[:, 1].reshape(-1,1))
                              - st.transform(numpy.array(ori[1]).reshape(1,1)))) - 1
+        else:
+            rt = performance[:, 1].reshape(-1,1) - ori[1]
+        #print up,ut
         return rp / rt
 
     def _loop_body(self,current,forward_step = 16, backward_step = 3,gird_count = 10000):
@@ -111,8 +124,7 @@ class StruOptim(object):
         arr_performance = numpy.array(performance)
         ratio_score = self._mu_trans(ori, arr_performance, gird_count)
         idx = numpy.argmax(ratio_score)
-        #print arr_performance[:,0].transpose()
-        #print arr_performance[:,1].transpose()
+        #print ratio_score.transpose(),idx
         return group[idx],arr_performance[idx]
 
     def start_optim(self,init_samples = 20,time_bound = 1, forward_step = 16,backward_step = 3,girds = 10000):

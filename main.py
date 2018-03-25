@@ -40,17 +40,21 @@ def mapping(reader):
 def create_network(para, verbose=False):
     with cntk.layers.default_options(init=cntk.glorot_uniform(), activation=cntk.ops.relu):
         # In order to accelerate the debugging step, we choose a simple structure with only 2 parameters
-        h = cntk.layers.Convolution2D(filter_shape=(3, 3), num_filters=para[0],
-                                      strides=(1, 1), pad=True, name='C1')(network_input / 255.0)
-        h = cntk.layers.layers.MaxPooling(filter_shape=(3, 3), strides=(2, 2), )(h)
 
-        h = cntk.layers.Convolution2D(filter_shape=(3, 3), num_filters=para[1],
+        h = cntk.layers.Convolution2D(filter_shape=(5, 5), num_filters=para[0],
+                                      strides=(1, 1), pad=True, name='C1')(network_input / 255.0)
+        h = cntk.layers.layers.MaxPooling(filter_shape=(5, 5), strides=(2, 2), )(h)
+
+        h = cntk.layers.Convolution2D(filter_shape=(5, 5), num_filters=para[1],
                                       strides=(1, 1), pad=True, name='C2')(h)
-        h = cntk.layers.layers.MaxPooling(filter_shape=(3, 3), strides=(2, 2))(h)
+        h = cntk.layers.layers.MaxPooling(filter_shape=(5, 5), strides=(2, 2))(h)
 
         h = cntk.layers.Convolution2D(filter_shape=(3, 3), num_filters=para[2],
-                                      strides=(1, 1), pad=True, name='C3')(h)
-        h = cntk.layers.layers.MaxPooling(filter_shape=(3, 3), strides=(2, 2))(h)
+                                      strides=(1, 1), pad=True, name='C2')(h)
+
+        h = cntk.layers.Dense(para[3])(h)
+
+        h = cntk.layers.Dropout(0.25)(h)
 
         z = cntk.layers.Dense(10, activation=None, name='R')(h)
         loss = cntk.cross_entropy_with_softmax(z, network_label)
@@ -59,7 +63,7 @@ def create_network(para, verbose=False):
     learner = cntk.momentum_sgd(z.parameters, lr_schedule, cntk.momentum_schedule(0.9))
     trainer = cntk.Trainer(z, (loss, label_error), [learner])
     if verbose: log = cntk.logging.ProgressPrinter(100)
-    for _ in xrange(500):
+    for _ in xrange(20000):
         data = train_reader.next_minibatch(100, input_map=mapping(train_reader))
         trainer.train_minibatch(data)
         if verbose: log.update_with_trainer(trainer)
@@ -67,5 +71,5 @@ def create_network(para, verbose=False):
 
 
 if __name__ == '__main__':
-    optimizer = StruOptim(create_network,valid_reader,mapping,100,100,network_input,[2,2,2],[130,130,130])
-    optimizer.start_optim(init_samples = 100)
+    optimizer = StruOptim(create_network,valid_reader,mapping,100,100,network_input,[2,2,2,2],[130,130,1026,1026])
+    optimizer.start_optim(init_samples = 100, forward_step=[8,8,16,16])
