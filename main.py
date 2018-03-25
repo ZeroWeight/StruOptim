@@ -57,7 +57,7 @@ def create_network(para, verbose=False):
         h = cntk.layers.Dropout(0.25)(h)
 
         z = cntk.layers.Dense(10, activation=None, name='R')(h)
-        loss = cntk.cross_entropy_with_softmax(z, network_label)
+    loss = cntk.cross_entropy_with_softmax(z, network_label)
     label_error = cntk.classification_error(z, network_label)
     lr_schedule = cntk.learning_rate_schedule(0.1, cntk.UnitType.minibatch)
     learner = cntk.momentum_sgd(z.parameters, lr_schedule, cntk.momentum_schedule(0.9))
@@ -72,4 +72,4 @@ def create_network(para, verbose=False):
 
 if __name__ == '__main__':
     optimizer = StruOptim(create_network,valid_reader,mapping,100,100,network_input,[2,2,2,2],[130,130,1026,1026])
-    optimizer.start_optim(init_samples = 100, forward_step=[8,8,16,16])
+    optimizer.start_optim(forward_step=[8,8,8,16])

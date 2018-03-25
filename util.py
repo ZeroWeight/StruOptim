@@ -25,7 +25,6 @@ class Node(object):
             data = valid.next_minibatch(valid_batch, input_map=mapping(valid))
             arr = numpy.array(data[input_key].as_sequences())
             arr = numpy.reshape(arr, (-1,) + input_key.shape)
-            # print arr.shape
             current_time = time.clock()
             cpu_timer.eval(arr, device=cntk.cpu())
             current_time = time.clock() - current_time
