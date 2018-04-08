@@ -97,7 +97,7 @@ class StruOptim(object):
         self.hist_perform.append(ori)
         group = self._next_gen_linear(current,forward_step)
         if len(group) == 0:
-            return current,[0,0]
+            return current,[-1,0]
         performance = []
         for new_para in group:
             vec = self._node(new_para)
@@ -127,14 +127,23 @@ class StruOptim(object):
         #print ratio_score.transpose(),idx
         return group[idx],arr_performance[idx]
 
-    def start_optim(self,init_samples = 20,time_bound = 1, forward_step = 16,backward_step = 3,girds = 10000):
+    def start_optim(self,base_line,bound_style,init_samples = 20, forward_step = 16,backward_step = 3,girds = 10000):
         print 'Initializing the searching space...'
         self._init(init_samples)
         print 'Finished'
-        current = self.start
-        perform = [1,0]
-        while perform[1] < time_bound and perform[0] > 0:
-            current,perform = self._loop_body(current, forward_step, backward_step, girds)
-            print current,perform
+        print 'Checking baseline performance...'
+        [perform_bound,time_bound] = self._node(base_line)
+        print perform_bound,time_bound
+        if bound_style == 'time':
+            current = self.start
+            perform = [0,0]
+            while perform[1] < time_bound and perform[0] >= 0:
+                current,perform = self._loop_body(current, forward_step, backward_step, girds)
+                print current,perform
 
-
+        elif bound_style == 'perform':
+            current = self.start
+            perform = [0, 0]
+            while 0 <= perform[0] < perform_bound:
+                current, perform = self._loop_body(current, forward_step, backward_step, girds)
+                print current, perform
