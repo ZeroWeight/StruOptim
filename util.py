@@ -29,7 +29,7 @@ class Node(object):
             cpu_timer.eval(arr, device=cntk.cpu())
             current_time = time.clock() - current_time
             time_cost.append(current_time)
-        self.time = numpy.min(time_cost)
+        self.time = numpy.mean(time_cost)
 
     def __str__(self):
         return "{0:10s}\t{1:.2e}ms\t{2:.2f}%".format(','.join(map(str, self.para)), self.time * 1000,
