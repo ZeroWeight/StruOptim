@@ -1,5 +1,6 @@
 #import sklearn.model_selection
 import cntk
+import sys
 from core import *
 '''
 arr = []
@@ -72,4 +73,4 @@ def create_network(para, verbose=False):
 
 if __name__ == '__main__':
     optimizer = StruOptim(create_network,valid_reader,mapping,100,100,network_input,[2,2,2,2],[130,130,1026,1026])
-    optimizer.start_optim([6,16,84,128],'time',forward_step=[2,2,2,4],backward_step=2)
+    optimizer.start_optim([6,16,84,128],sys.argv[1],forward_step=[2,2,2,4],backward_step=2)

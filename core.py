@@ -134,10 +134,17 @@ class StruOptim(object):
         print 'Checking baseline performance...'
         [perform_bound,time_bound] = self._node(base_line)
         print perform_bound,time_bound
+        tol = 0
         if bound_style == 'time':
             current = self.start
             perform = [0,0]
-            while perform[1] < time_bound and perform[0] >= 0:
+            while  perform[0] >= 0:
+                if perform[1] < time_bound:
+                    tol = 0
+                else:
+                    tol = tol + 1
+                if tol > 5:
+                    break
                 current,perform = self._loop_body(current, forward_step, backward_step, girds)
                 print current,perform
 
